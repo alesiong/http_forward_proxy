@@ -10,4 +10,4 @@ edition = "2018"
 hyper = "0.13"
 tokio = { version = "0.2", features = ["full"] }
 clap = "2.33"
-hyper-proxy = { git = "https://github.com/alesiong/hyper-proxy.git" }
+hyper-proxy = { git = "https://github.com/alesiong/hyper-proxy.git", features = [], default-features = false }

@@ -100,7 +100,7 @@ async fn main() {
             }).map(|proxy_uri| {
                 let proxy = Proxy::new(Intercept::All, proxy_uri);
                 let connector = HttpConnector::new();
-                let proxy_connector = ProxyConnector::from_proxy(connector, proxy).unwrap();
+                let proxy_connector = ProxyConnector::from_proxy_unsecured(connector, proxy);
                 proxy_connector
             })
         },
