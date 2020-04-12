@@ -15,37 +15,37 @@ use hyper::{
     StatusCode,
     Uri,
 };
-use hyper::header::HeaderValue;
 use hyper_proxy::{Intercept, Proxy, ProxyConnector};
 
 struct Config {
-    proxy_to: String,
+    proxy_to: Uri,
     via_proxy: Option<ProxyConnector<HttpConnector>>,
 }
 
 async fn forward(req: Request<Body>, config: Arc<Config>) -> Result<Response<Body>, hyper::http::Error> {
     async fn handle(mut req: Request<Body>, config: Arc<Config>) -> Result<Response<Body>, Box<dyn std::error::Error + Send + Sync>> {
         let uri = req.uri();
-        let mut new_uri_builder = Uri::builder().authority(config.proxy_to.as_str());
-
-        new_uri_builder = new_uri_builder.path_and_query(
-            uri.path_and_query()
-                .map(|p| p.as_str())
-                .unwrap_or("/")
-        );
-
-        new_uri_builder = new_uri_builder.scheme(
-            uri.scheme()
-                .map(|s| s.as_str())
-                .unwrap_or("http")
-        );
+        let new_uri_builder = Uri::builder()
+            .authority(
+                config.proxy_to.authority()
+                    .map(|a| a.as_str())
+                    .unwrap_or("")
+            )
+            .path_and_query(
+                uri.path_and_query()
+                    .map(|p| p.as_str())
+                    .unwrap_or("/")
+            )
+            .scheme(
+                config.proxy_to.scheme_str().unwrap_or("http")
+            );
 
         let new_uri = new_uri_builder.build()?;
-        req.headers_mut().insert("host", HeaderValue::from_str(&config.proxy_to)?);
         *req.uri_mut() = new_uri;
 
         let resp = match &config.via_proxy {
             Some(proxy) => {
+                println!("{:?}", req);
                 Client::builder().build(proxy.clone()).request(req).await?
             }
             None => Client::new().request(req).await?,
@@ -92,14 +92,14 @@ async fn main() {
     let addr = SocketAddr::from_str(matches.value_of("listen").unwrap()).unwrap();
 
     let config = Arc::new(Config {
-        proxy_to: matches.value_of("to").unwrap().to_owned(),
+        proxy_to: Uri::from_str(matches.value_of("to").unwrap()).unwrap(),
         via_proxy: {
             matches.value_of("via").and_then(|via| {
                 via.parse::<Uri>().ok()
             }).map(|proxy_uri| {
                 let proxy = Proxy::new(Intercept::All, proxy_uri);
                 let connector = HttpConnector::new();
-                let proxy_connector = ProxyConnector::from_proxy_unsecured(connector, proxy);
+                let proxy_connector = ProxyConnector::from_proxy(connector, proxy).unwrap();
                 proxy_connector
             })
         },

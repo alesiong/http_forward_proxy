@@ -8,6 +8,6 @@ edition = "2018"
 
 [dependencies]
 hyper = "0.13"
-tokio = { version = "0.2", features = ["full"] }
-clap = "2.33"
-hyper-proxy = { git = "https://github.com/alesiong/hyper-proxy.git", features = [], default-features = false }
+tokio = { version = "0.2", features = ["macros"] }
+clap = { version = "2.33", features = [], default-features = false }
+hyper-proxy = { git = "https://github.com/alesiong/hyper-proxy.git", features = ["rustls"], default-features = false }
