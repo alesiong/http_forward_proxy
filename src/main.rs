@@ -45,7 +45,6 @@ async fn forward(req: Request<Body>, config: Arc<Config>) -> Result<Response<Bod
 
         let resp = match &config.via_proxy {
             Some(proxy) => {
-                println!("{:?}", req);
                 Client::builder().build(proxy.clone()).request(req).await?
             }
             None => Client::new().request(req).await?,
@@ -99,7 +98,12 @@ async fn main() {
             }).map(|proxy_uri| {
                 let proxy = Proxy::new(Intercept::All, proxy_uri);
                 let connector = HttpConnector::new();
-                let proxy_connector = ProxyConnector::from_proxy(connector, proxy).unwrap();
+                let proxy_connector =
+                    if cfg!(any(feature = "tls", feature = "rustls")) {
+                        ProxyConnector::from_proxy(connector, proxy).unwrap()
+                    } else {
+                        ProxyConnector::from_proxy_unsecured(connector, proxy)
+                    };
                 proxy_connector
             })
         },

@@ -11,3 +11,8 @@ hyper = "0.13"
 tokio = { version = "0.2", features = ["macros"] }
 clap = { version = "2.33", features = [], default-features = false }
 hyper-proxy = { git = "https://github.com/alesiong/hyper-proxy.git", features = ["rustls"], default-features = false }
+
+[features]
+default = ["rustls"]
+rustls = ["hyper-proxy/rustls"]
+tls = ["hyper-proxy/tls"]
