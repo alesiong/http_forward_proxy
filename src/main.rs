@@ -15,8 +15,8 @@ use hyper::{
     StatusCode,
     Uri,
 };
-use hyper_proxy::{Intercept, Proxy, ProxyConnector};
 use hyper::header::HeaderValue;
+use hyper_proxy::{Intercept, Proxy, ProxyConnector};
 
 struct Config {
     proxy_to: String,
@@ -28,18 +28,17 @@ async fn forward(req: Request<Body>, config: Arc<Config>) -> Result<Response<Bod
         let uri = req.uri();
         let mut new_uri_builder = Uri::builder().authority(config.proxy_to.as_str());
 
-        if let Some(p_and_q) = uri.path_and_query() {
-            new_uri_builder = new_uri_builder.path_and_query(p_and_q.as_str());
-        } else {
-            new_uri_builder = new_uri_builder.path_and_query("/");
-        }
+        new_uri_builder = new_uri_builder.path_and_query(
+            uri.path_and_query()
+                .map(|p| p.as_str())
+                .unwrap_or("/")
+        );
 
-        if let Some(scheme) = uri.scheme() {
-            new_uri_builder = new_uri_builder.scheme(scheme.as_str());
-        } else {
-            new_uri_builder = new_uri_builder.scheme("http");
-        }
-
+        new_uri_builder = new_uri_builder.scheme(
+            uri.scheme()
+                .map(|s| s.as_str())
+                .unwrap_or("http")
+        );
 
         let new_uri = new_uri_builder.build()?;
         req.headers_mut().insert("host", HeaderValue::from_str(&config.proxy_to)?);
