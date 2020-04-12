@@ -42,21 +42,11 @@ async fn forward(req: Request<Body>, config: Arc<Config>) -> Result<Response<Bod
 
 
         let new_uri = new_uri_builder.build()?;
-
         req.headers_mut().insert("host", HeaderValue::from_str(&config.proxy_to)?);
-
         *req.uri_mut() = new_uri;
-
-
-        println!("{:?}", req.uri());
 
         let resp = match &config.via_proxy {
             Some(proxy) => {
-                let uri: Uri = "http://google.com".parse()?;
-
-                let req = Request::get(uri.clone()).body(hyper::Body::empty())?;
-                println!("{:?}", proxy.http_headers(req.uri()));
-                println!("{:?}", req);
                 Client::builder().build(proxy.clone()).request(req).await?
             }
             None => Client::new().request(req).await?,

@@ -335,7 +335,7 @@ dependencies = [
 [[package]]
 name = "hyper-proxy"
 version = "0.6.0"
-source = "git+https://github.com/tafia/hyper-proxy.git#870f7879500e5e4f750cb03e3e298d349e113967"
+source = "git+https://github.com/alesiong/hyper-proxy.git#64367b91327b3cffd5396acd93dc6188aa0637be"
 dependencies = [
  "bytes",
  "futures",
