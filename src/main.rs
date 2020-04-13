@@ -90,6 +90,17 @@ async fn main() {
 
     let addr = SocketAddr::from_str(matches.value_of("listen").unwrap()).unwrap();
 
+    #[cfg(any(feature = "tls", feature = "rustls"))]
+    fn get_proxy_connector(connector: HttpConnector, proxy: Proxy) -> ProxyConnector<HttpConnector> {
+        ProxyConnector::from_proxy(connector, proxy).unwrap()
+    }
+
+    #[cfg(not(any(feature = "tls", feature = "rustls")))]
+    fn get_proxy_connector(connector: HttpConnector, proxy: Proxy) -> ProxyConnector<HttpConnector> {
+        ProxyConnector::from_proxy_unsecured(connector, proxy)
+    }
+
+
     let config = Arc::new(Config {
         proxy_to: Uri::from_str(matches.value_of("to").unwrap()).unwrap(),
         via_proxy: {
@@ -98,13 +109,7 @@ async fn main() {
             }).map(|proxy_uri| {
                 let proxy = Proxy::new(Intercept::All, proxy_uri);
                 let connector = HttpConnector::new();
-                let proxy_connector =
-                    if cfg!(any(feature = "tls", feature = "rustls")) {
-                        ProxyConnector::from_proxy(connector, proxy).unwrap()
-                    } else {
-                        ProxyConnector::from_proxy_unsecured(connector, proxy)
-                    };
-                proxy_connector
+                get_proxy_connector(connector, proxy)
             })
         },
     });
